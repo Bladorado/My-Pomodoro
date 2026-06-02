@@ -33,19 +33,19 @@ export default function LevelBadge({
 
     // Definir tamaños para cada opción (sm, md, lg)
     const sizes = {
-        sm: {   // Tamaño pequeño
+        sm: {   
             badge: 'px-2 py-0.5 text-xs',
             icon: 'text-sm',
             number: 'text-xs',
             progress: 'h-1'
         },
-        md: {   // Tamaño mediano (por defecto)
+        md: {   
             badge: 'px-3 py-1 text-sm',
             icon: 'text-base',
             number: 'text-sm',
             progress: 'h-1.5'
         },
-        lg: {   // Tamaño grande
+        lg: {   
             badge: 'px-4 py-2 text-base',
             icon: 'text-lg',
             number: 'text-base',
@@ -53,7 +53,6 @@ export default function LevelBadge({
         }
     };
 
-    // Definir las diferentes variantes del badge
     const variants = {
         // Variante por defecto: badge circular con tooltip
         default: (

@@ -9,11 +9,10 @@ export default function MoodMessage({
   interval = 5000 
 }) {
   // Estado para el mensaje actual que se muestra
-  const [currentMessage, setCurrentMessage] = useState(mensaje);
-  // Estado para controlar la visibilidad (animación de entrada/salida)
+  const [currentMessage, setCurrentMessage] = useState(null);  
   const [isVisible, setIsVisible] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false); 
 
-  // Biblioteca de mensajes según el ánimo de la mascota
   const messageLibrary = {
     feliz: [
       "¡Qué bien trabajamos juntos! ✨",
@@ -50,7 +49,6 @@ export default function MoodMessage({
     ]
   };
 
-  // Consejos según el ánimo (aparecen al hacer hover)
   const tips = {
     feliz: "Sigue así, mantén el equilibrio",
     tranquilo: "La calma es tu superpoder",
@@ -58,39 +56,47 @@ export default function MoodMessage({
     sobrecargado: "Haz una pausa larga, te lo agradecerá"
   };
 
-
+  // Inicializar mensaje SOLO UNA VEZ
   useEffect(() => {
-    if (autoChange) {
-      // Crea un intervalo que cambia el mensaje
-      const intervalId = setInterval(() => {
- 
-        setIsVisible(false);
-        
-        // Después de 300ms, cambia el mensaje y lo muestra
-        setTimeout(() => {
-          const library = messageLibrary[animo];
+    if (!isInitialized) {
+      let mensajeInicial = mensaje;
+      if (!mensajeInicial || autoChange) {
+        const library = messageLibrary[animo];
+        const randomIndex = Math.floor(Math.random() * library.length);
+        mensajeInicial = library[randomIndex];
+      }
+      setCurrentMessage(mensajeInicial);
+      setIsInitialized(true);
+    }
+  }, [mensaje, animo, autoChange, isInitialized]);
+
+  // EFECTO PARA CAMBIO AUTOMÁTICO - PERO SIN DEPENDER DEL MENSAJE EXTERNO
+  useEffect(() => {
+    if (!autoChange) return;
+    
+    console.log("✅ Intervalo iniciado para animo:", animo);
+    
+    const intervalId = setInterval(() => {
+      setIsVisible(false);
+      
+      setTimeout(() => {
+        const library = messageLibrary[animo];
+        if (library && library.length > 0) {
           const randomIndex = Math.floor(Math.random() * library.length);
-          setCurrentMessage(library[randomIndex]);
-          setIsVisible(true);
-        }, 300);
-        
-      }, interval); 
+          const nuevoMensaje = library[randomIndex];
+          setCurrentMessage(nuevoMensaje);
+        }
+        setIsVisible(true);
+      }, 300);
+    }, interval);
 
-      // Limpia el intervalo cuando el componente se desmonta
-      return () => clearInterval(intervalId);
-    }
-  }, [animo, autoChange, interval]); 
+    return () => {
+      console.log("🧹 Limpiando intervalo");
+      clearInterval(intervalId);
+    };
+  }, [animo, interval, autoChange]);  
 
-  // Si no hay mensaje proporcionado, seleccionar uno aleatorio de la biblioteca
-  if (!currentMessage) {
-    const library = messageLibrary[animo];
-    const randomIndex = Math.floor(Math.random() * library.length);
-    if (!mensaje) {
-      setCurrentMessage(library[randomIndex]);
-    }
-  }
-
-  // Estilos según el ánimo de la mascota
+  // Estilos según el ánimo
   const getMoodStyles = () => {
     const styles = {
       feliz: {
@@ -123,7 +129,6 @@ export default function MoodMessage({
 
   const moodStyles = getMoodStyles();
 
-  // Iconos según el ánimo
   const moodIcons = {
     feliz: '😊',
     tranquilo: '😌',
@@ -131,9 +136,10 @@ export default function MoodMessage({
     sobrecargado: '😵'
   };
 
+  if (!currentMessage) return null;
+
   return (
     <div className="relative group">
-      {/* Burbuja de mensaje principal */}
       <div 
         className={`
           relative ${moodStyles.bubble} border-2 rounded-2xl 
@@ -142,16 +148,13 @@ export default function MoodMessage({
           ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
         `}
       >
-        {/* Punta de la burbuja (el triángulo que apunta hacia la mascota) */}
         <div className={`
           absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2
           rotate-45 w-4 h-4 ${moodStyles.bubble} border-r-2 border-b-2
           ${moodStyles.bubble.split(' ')[1]}
         `} />
 
-        {/* Contenido de la burbuja */}
         <div className="flex items-start gap-3">
-          {/* Icono circular del ánimo */}
           <div className={`
             w-8 h-8 rounded-full ${moodStyles.accent} 
             flex items-center justify-center text-white text-lg
@@ -159,13 +162,11 @@ export default function MoodMessage({
             {moodIcons[animo]}
           </div>
 
-          {/* Mensaje de texto */}
           <div className="flex-1">
             <p className={`${moodStyles.text} text-sm font-medium leading-relaxed`}>
               {currentMessage}
             </p>
             
-            {/* Tip/consejo - solo visible al hacer hover sobre la burbuja */}
             <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <p className={`${moodStyles.tip} text-xs italic`}>
                 💡 {tips[animo]}
@@ -174,11 +175,9 @@ export default function MoodMessage({
           </div>
         </div>
 
-        {/* Indicador de tiempo (cuando autoChange está activado) */}
         {autoChange && (
           <div className="absolute bottom-2 right-2">
             <div className="flex gap-0.5">
-              {/* Tres puntos que laten para indicar que cambiará el mensaje */}
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
@@ -192,7 +191,6 @@ export default function MoodMessage({
         )}
       </div>
 
-      {/* Decoración adicional - elemento flotante con efecto de ping */}
       <div className={`
         absolute -top-2 -right-2 w-6 h-6 rounded-full 
         ${moodStyles.accent} opacity-50 blur-sm

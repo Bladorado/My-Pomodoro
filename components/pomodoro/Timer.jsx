@@ -36,14 +36,12 @@ export default function Timer({ initialMinutes, isActive, onComplete }) {
                     }
                 }
 
-
-
                 const totalSeconds = initialMinutes * 60;
                 const currentSeconds = minutes * 60 + seconds;
                 const newProgress = (currentSeconds / totalSeconds) * 100;
 
                 setProgress(newProgress);
-            }, 1000); // 1000ms = 1 segundo
+            }, 1000); 
         }
 
         // Función de limpieza: se ejecuta cuando el componente se desmonta o antes de ejecutar el efecto nuevamente

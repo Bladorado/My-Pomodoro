@@ -1,39 +1,66 @@
-"use client"
-import { useState, useCallback } from 'react';
+"use client";
 
-
+import { useState, useEffect } from 'react';  
 import Timer from "@/components/pomodoro/Timer";
 import TimerControls from "@/components/pomodoro/TimerControls";
 import PhaseIndicator from '@/components/pomodoro/PhaseIndicator';
 import MascotaCard from '@/components/mascota/MascotaCard';
 
+import { useMascotaStore } from '@/store/mascota/mascotaStore';
+import { usePomodoroStore } from '@/store/pomodoro/pomodoroStore';
+import { useStatsStore } from '@/store/stats/statsStore'; 
+
 
 
 export default function HomePage() {
+ 
+  const { isActive, phase, minutes, resetKey, iniciar, pausar, resetear, cambiarFase } = usePomodoroStore()
+  
+  const { completarPomodoro, completarDescanso, alIniciarTimer, alPausarTimer, reiniciarProgreso } = useMascotaStore()
+  const { iniciarDia, registrarPomodoro, registrarDescanso } = useStatsStore();  
 
-  const [isActive, setIsActive] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
-  const [minutes, setMinutes] = useState(25);
-  const [phase, setPhase] = useState('focus');
+  const mascota = useMascotaStore(); 
+   const stats = useStatsStore(); 
 
-  const handleReset = () => {
-    setIsActive(false);
-    setResetKey(prev => prev + 1);
-    setPhase('focus');
-    setMinutes(25);
+  // Inicializar el día al cargar la página
+  useEffect(() => {
+    iniciarDia();
+  }, [iniciarDia]);
+
+  const handleTimerComplete = () => {
+ 
+    if (phase === 'focus') {
+      console.log("➡️ FOCUS → BREAK");
+      completarPomodoro();
+      registrarPomodoro();        
+      cambiarFase('break', 5);
+    } else {
+      console.log("➡️ BREAK → FOCUS");
+      completarDescanso();
+      registrarDescanso();  
+      cambiarFase('focus', 25);
+    }
+    
+    // ← Espera un momento y verifica
+    setTimeout(() => {
+      console.log("📊 resetKey después de cambiar:", resetKey);
+    }, 100);
   };
 
-  const handleTimerComplete = useCallback(() => {
-    if (phase === 'focus') {
-      setPhase('break');
-      setMinutes(5);
-    } else if (phase === 'break') {
-      setPhase('focus');
-      setMinutes(25);
-    }
-    setResetKey(prev => prev + 1);
-    setIsActive(false);
-  }, [phase]);  // ← Solo se recrea cuando 'phase' cambia
+  const handleStart = () => {
+    iniciar();
+    alIniciarTimer();
+  };
+
+  const handlePause = () => {
+    pausar();
+    alPausarTimer();
+  };
+
+  const handleReset = () => {
+    resetear();
+    reiniciarProgreso();
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
@@ -58,14 +85,14 @@ export default function HomePage() {
           <section className="space-y-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-amber-200">
 
-              <PhaseIndicator phase="focus" />
+              <PhaseIndicator phase={phase} />
 
 
 
               <div className="flex justify-center my-8 ">
                 <Timer
                   key={resetKey}
-                  initialMinutes={25}
+                  initialMinutes={minutes}
                   isActive={isActive}
                   onComplete={handleTimerComplete}
                 />
@@ -75,8 +102,8 @@ export default function HomePage() {
 
             <TimerControls
               isActive={isActive}
-              onStart={() => setIsActive(true)}
-              onPause={() => setIsActive(false)}
+              onStart={handleStart}
+              onPause={handlePause}
               onReset={handleReset}
             />
 
@@ -92,7 +119,7 @@ export default function HomePage() {
 
           {/* Columna derecha: Mascota */}
           <section className="lg:sticky lg:top-8 ">
-            <MascotaCard />
+            <MascotaCard mascota={mascota} stats={stats} />  
           </section>
 
         </div>
